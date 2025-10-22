@@ -3,8 +3,8 @@ import express from "express";
 import ErrorRoute from "./routes/error.route";
 import bearerAuth from "./lib/auth/bearerAuth";
 import MinioRouter from "./routes/minio.route";
-import HealthRoute from "./routes/health.route";
 import UsersRouter from "./routes/users.route";
+import HealthRoute from "./routes/health.route";
 import BucketsRouter from "./routes/buckets.route";
 import CompaniesRouter from "./routes/companies.route";
 

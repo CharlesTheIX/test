@@ -1,11 +1,14 @@
+import Link from "next/link";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { header_external } from "@/globals";
 import { default_404_metadata, site_name } from "@/globals";
 import PermissionsWrapper from "@/components/PermissionsWrapper";
-import Link from "next/link";
+import BucketObjectLockConfigForm from "@/components/forms/buckets/BucketObjectLockConfigForm";
 
 type Params = Promise<{ _id: string }>;
+
+export const revalidate = 3600; // seconds (1 hour)
 
 export const generateMetadata = async ({ params }: { params: Promise<Params> }): Promise<Metadata> => {
   const { _id } = await params;
@@ -41,15 +44,12 @@ export const generateStaticParams = async (): Promise<{ _id: string }[]> => {
 };
 
 const Page = async ({ params }: { params: Params }): Promise<React.JSX.Element> => {
-  const populate = ["company_id"];
-  const fields = ["permissions", "name", "max_size_bytes", "consumption_bytes", "createdAt", "updatedAt", "company_id", "object_count"];
-  const filters = { fields, populate };
   try {
     const { _id } = await params;
     const res = await fetch(`${process.env.API_ENDPOINT}/v1/buckets/by-id`, {
       method: "POST",
       headers: header_external,
-      body: JSON.stringify({ bucket_id: _id, filters }),
+      body: JSON.stringify({ bucket_id: _id, filters: { fields: ["name"] } }),
     }).then((res) => res.json());
     if (res.error) return notFound();
 
@@ -59,17 +59,18 @@ const Page = async ({ params }: { params: Params }): Promise<React.JSX.Element> 
       headers: header_external,
       body: JSON.stringify({ bucket_name: data.name }),
     }).then((res) => res.json());
+    console.log(object_lock_config);
 
     return (
       <main>
         <section>
           <div className="flex flex-row gap-2 items-center justify-between">
-            <h1>{data.name} Object Lock Config</h1>
+            <h1>{data.name}: Object Lock Config</h1>
 
             <div className="flex flex-row gap-2 items-center">
               <PermissionsWrapper permissions={[9]}>
-                <Link href={`/buckets/${data._id}/upload`} className="hyve-button">
-                  Edit
+                <Link href={`/buckets/${data._id}/object-lock-config/set`} className="hyve-button">
+                  Set
                 </Link>
               </PermissionsWrapper>
 
@@ -80,14 +81,17 @@ const Page = async ({ params }: { params: Params }): Promise<React.JSX.Element> 
           </div>
         </section>
 
-        <section>
+        <section className="pb-8">
           <p>
-            Lorem ipsum dolor sit amet consectetur adipisicing elit. Omnis officiis laborum quaerat, ea, soluta aliquid porro delectus labore eos ad distinctio commodi, dignissimos
-            harum? Delectus ut odit nam amet dolore? Lorem ipsum dolor sit amet consectetur adipisicing elit. Voluptate iure eum amet, veritatis dicta ea natus pariatur nobis nisi
-            ut consequuntur temporibus blanditiis vel? Nisi optio praesentium ab laborum deleniti. Lorem ipsum, dolor sit amet consectetur adipisicing elit. Libero mollitia quos
-            perspiciatis! Dicta officia neque reprehenderit illum iure eos ratione fugit non ducimus quidem! Temporibus reprehenderit autem magnam optio nisi.
+            Lorem ipsum dolor sit amet consectetur adipisicing elit. Omnis officiis laborum quaerat, ea, soluta aliquid porro delectus labore eos ad
+            distinctio commodi, dignissimos harum? Delectus ut odit nam amet dolore? Lorem ipsum dolor sit amet consectetur adipisicing elit.
+            Voluptate iure eum amet, veritatis dicta ea natus pariatur nobis nisi ut consequuntur temporibus blanditiis vel? Nisi optio praesentium ab
+            laborum deleniti. Lorem ipsum, dolor sit amet consectetur adipisicing elit. Libero mollitia quos perspiciatis! Dicta officia neque
+            reprehenderit illum iure eos ratione fugit non ducimus quidem! Temporibus reprehenderit autem magnam optio nisi.
           </p>
         </section>
+
+        <section></section>
       </main>
     );
   } catch (err: any) {

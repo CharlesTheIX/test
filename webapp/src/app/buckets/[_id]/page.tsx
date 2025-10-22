@@ -1,13 +1,15 @@
 import Link from "next/link";
 import { Metadata } from "next";
+import Cog from "@/components/svgs/Cog";
 import { notFound } from "next/navigation";
 import { colors, header_external } from "@/globals";
 import { default_404_metadata, site_name } from "@/globals";
 import DeleteDataButton from "@/components/buttons/DeleteDataButton";
 import BucketDataCard from "@/components/cards/buckets/BucketDataCard";
-import Cog from "@/components/svgs/Cog";
 
 type Params = Promise<{ _id: string }>;
+
+export const revalidate = 3600; // seconds (1 hour)
 
 export const generateMetadata = async ({ params }: { params: Promise<Params> }): Promise<Metadata> => {
   const { _id } = await params;
@@ -58,76 +60,100 @@ const Page = async ({ params }: { params: Params }): Promise<React.JSX.Element> 
     const data: Bucket = res.data;
     return (
       <main>
-        <div className="buckets-dashboard">
-          <aside>
-            <nav>
-              <ul>
-                <li>
-                  <Cog size={16} primary_color={colors.green} />
-                  <Link href={`/buckets/${_id}/objects`}>Objects</Link>
-                </li>
+        <div className="w-full">
+          <section>
+            <div className="flex flex-row gap-2 items-center justify-between">
+              <h1>Bucket: {data?.name}</h1>
 
-                <li>
-                  <Cog size={16} primary_color={colors.green} />
-                  <Link href={`/buckets/${_id}/tagging`}>Tagging</Link>
-                </li>
+              <div className="flex flex-row gap-2 items-center">
+                <Link href={`/buckets/${data._id}/edit`} className="hyve-button">
+                  Edit
+                </Link>
 
-                <li>
-                  <Cog size={16} primary_color={colors.green} />
-                  <Link href={`/buckets/${_id}/policies`}>Policies</Link>
-                </li>
-
-                <li>
-                  <Cog size={16} primary_color={colors.green} />
-                  <Link href={`/buckets/${_id}/encryption`}>Encryption</Link>
-                </li>
-
-                <li>
-                  <Cog size={16} primary_color={colors.green} />
-                  <Link href={`/buckets/${_id}/lifecycles`}>Lifecycles</Link>
-                </li>
-
-                <li>
-                  <Cog size={16} primary_color={colors.green} />
-                  <Link href={`/buckets/${_id}/versioning`}>Versioning</Link>
-                </li>
-
-                <li>
-                  <Cog size={16} primary_color={colors.green} />
-                  <Link href={`/buckets/${_id}/notifications`}>Notifications</Link>
-                </li>
-
-                <li>
-                  <Cog size={16} primary_color={colors.green} />
-                  <Link href={`/buckets/${_id}/object-lock-config`}>Object Lock Config</Link>
-                </li>
-              </ul>
-            </nav>
-          </aside>
-
-          <div className="w-full">
-            <section>
-              <div className="flex flex-row gap-2 items-center justify-between">
-                <div className="flex flex-row gap-2 items-center">
-                  <h1>{data?.name}</h1>
-                </div>
-
-                <div className="flex flex-row gap-2 items-center">
-                  <Link href={`/buckets/${data._id}/edit`} className="hyve-button">
-                    Edit
-                  </Link>
-
-                  <DeleteDataButton data_key={data._id || ""} type="bucket" redirect="/buckets">
-                    <p>Delete</p>
-                  </DeleteDataButton>
-                </div>
+                <DeleteDataButton data_key={data._id || ""} type="bucket" redirect="/buckets">
+                  <p>Delete</p>
+                </DeleteDataButton>
               </div>
-            </section>
+            </div>
+          </section>
 
-            <section>
+          <section className="pb-8">
+            <p>
+              Lorem ipsum dolor sit amet consectetur adipisicing elit. Omnis officiis laborum quaerat, ea, soluta aliquid porro delectus labore eos ad
+              distinctio commodi, dignissimos harum? Delectus ut odit nam amet dolore? Lorem ipsum dolor sit amet consectetur adipisicing elit.
+              Voluptate iure eum amet, veritatis dicta ea natus pariatur nobis nisi ut consequuntur temporibus blanditiis vel? Nisi optio praesentium
+              ab laborum deleniti. Lorem ipsum, dolor sit amet consectetur adipisicing elit. Libero mollitia quos perspiciatis! Dicta officia neque
+              reprehenderit illum iure eos ratione fugit non ducimus quidem! Temporibus reprehenderit autem magnam optio nisi.
+            </p>
+          </section>
+
+          <section>
+            <div className="bucket-dashboard">
+              <aside>
+                <nav>
+                  <ul>
+                    <li>
+                      <Link href={`/buckets/${_id}/objects`}>
+                        <Cog size={16} primary_color={colors.green} />
+                        <p>Objects</p>
+                      </Link>
+                    </li>
+
+                    <li>
+                      <Link href={`/buckets/${_id}/tagging`}>
+                        <Cog size={16} primary_color={colors.green} />
+                        <p>Tagging</p>
+                      </Link>
+                    </li>
+
+                    <li>
+                      <Link href={`/buckets/${_id}/policies`}>
+                        <Cog size={16} primary_color={colors.green} />
+                        <p>Policies</p>
+                      </Link>
+                    </li>
+
+                    <li>
+                      <Link href={`/buckets/${_id}/encryption`}>
+                        <Cog size={16} primary_color={colors.green} />
+                        <p>Encryption</p>
+                      </Link>
+                    </li>
+
+                    <li>
+                      <Link href={`/buckets/${_id}/lifecycles`}>
+                        <Cog size={16} primary_color={colors.green} />
+                        <p>Lifecycles</p>
+                      </Link>
+                    </li>
+
+                    <li>
+                      <Link href={`/buckets/${_id}/versioning`}>
+                        <Cog size={16} primary_color={colors.green} />
+                        <p>Versioning</p>
+                      </Link>
+                    </li>
+
+                    <li>
+                      <Link href={`/buckets/${_id}/notifications`}>
+                        <Cog size={16} primary_color={colors.green} />
+                        <p>Notifications</p>
+                      </Link>
+                    </li>
+
+                    <li>
+                      <Link href={`/buckets/${_id}/object-lock-config`}>
+                        <Cog size={16} primary_color={colors.green} />
+                        <p>Object Lock Config</p>
+                      </Link>
+                    </li>
+                  </ul>
+                </nav>
+              </aside>
+
               <BucketDataCard data={data} />
-            </section>
-          </div>
+            </div>
+          </section>
         </div>
       </main>
     );

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Metadata } from "next";
 import { default_metadata, site_name } from "@/globals";
 import BucketCreationForm from "@/components/forms/buckets/BucketCreationForm";
@@ -11,8 +12,14 @@ export const metadata: Metadata = {
 const Page: React.FC = () => (
   <main>
     <section>
-      <div className="flex flex-row gap-2 items-center">
+      <div className="flex flex-row gap-2 items-center justify-between">
         <h1>Bucket Creation</h1>
+
+        <div className="flex flex-row gap-2 items-center">
+          <Link href={`/buckets`} className="hyve-button cancel">
+            Back
+          </Link>
+        </div>
       </div>
     </section>
 

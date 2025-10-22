@@ -8,6 +8,8 @@ import BucketObjectsTable from "@/components/tables/buckets/BucketObjectsTable";
 
 type Params = Promise<{ _id: string }>;
 
+export const revalidate = 3600; // seconds (1 hour)
+
 export const generateMetadata = async ({ params }: { params: Promise<Params> }): Promise<Metadata> => {
   const { _id } = await params;
   try {
@@ -59,7 +61,7 @@ const Page = async ({ params }: { params: Params }): Promise<React.JSX.Element> 
       <main>
         <section>
           <div className="flex flex-row gap-2 items-center justify-between">
-            <h1>{data.name} Objects</h1>
+            <h1>{data.name}: Objects</h1>
 
             <div className="flex flex-row gap-2 items-center">
               <PermissionsWrapper permissions={[9]}>
@@ -75,12 +77,13 @@ const Page = async ({ params }: { params: Params }): Promise<React.JSX.Element> 
           </div>
         </section>
 
-        <section className="pb-4">
+        <section className="pb-8">
           <p>
-            Lorem ipsum dolor sit amet consectetur adipisicing elit. Omnis officiis laborum quaerat, ea, soluta aliquid porro delectus labore eos ad distinctio commodi, dignissimos
-            harum? Delectus ut odit nam amet dolore? Lorem ipsum dolor sit amet consectetur adipisicing elit. Voluptate iure eum amet, veritatis dicta ea natus pariatur nobis nisi
-            ut consequuntur temporibus blanditiis vel? Nisi optio praesentium ab laborum deleniti. Lorem ipsum, dolor sit amet consectetur adipisicing elit. Libero mollitia quos
-            perspiciatis! Dicta officia neque reprehenderit illum iure eos ratione fugit non ducimus quidem! Temporibus reprehenderit autem magnam optio nisi.
+            Lorem ipsum dolor sit amet consectetur adipisicing elit. Omnis officiis laborum quaerat, ea, soluta aliquid porro delectus labore eos ad
+            distinctio commodi, dignissimos harum? Delectus ut odit nam amet dolore? Lorem ipsum dolor sit amet consectetur adipisicing elit.
+            Voluptate iure eum amet, veritatis dicta ea natus pariatur nobis nisi ut consequuntur temporibus blanditiis vel? Nisi optio praesentium ab
+            laborum deleniti. Lorem ipsum, dolor sit amet consectetur adipisicing elit. Libero mollitia quos perspiciatis! Dicta officia neque
+            reprehenderit illum iure eos ratione fugit non ducimus quidem! Temporibus reprehenderit autem magnam optio nisi.
           </p>
         </section>
 

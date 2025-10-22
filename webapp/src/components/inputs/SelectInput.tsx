@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import Chevron from "../svgs/Chevron";
+import Chevron from "@/components/svgs/Chevron";
 import { colors, null_option } from "@/globals";
 
 type Props = {

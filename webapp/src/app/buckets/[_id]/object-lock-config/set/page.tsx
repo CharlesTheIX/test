@@ -1,9 +1,9 @@
+import Link from "next/link";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { header_external } from "@/globals";
 import { default_404_metadata, site_name } from "@/globals";
-import PermissionsWrapper from "@/components/PermissionsWrapper";
-import Link from "next/link";
+import BucketObjectLockConfigForm from "@/components/forms/buckets/BucketObjectLockConfigForm";
 
 type Params = Promise<{ _id: string }>;
 
@@ -19,7 +19,7 @@ export const generateMetadata = async ({ params }: { params: Promise<Params> }):
     }).then((res) => res.json());
     if (res.error) return default_404_metadata;
     return {
-      title: `${res.data._id} | Policies | ${site_name}`,
+      title: `${res.data._id} | Object Lock Config | Set | ${site_name}`,
       description: `Some description here.`,
     };
   } catch (error: any) {
@@ -43,46 +43,31 @@ export const generateStaticParams = async (): Promise<{ _id: string }[]> => {
 };
 
 const Page = async ({ params }: { params: Params }): Promise<React.JSX.Element> => {
-  const populate = ["company_id"];
-  const fields = ["permissions", "name", "max_size_bytes", "consumption_bytes", "createdAt", "updatedAt", "company_id", "object_count"];
-  const filters = { fields, populate };
   try {
     const { _id } = await params;
     const res = await fetch(`${process.env.API_ENDPOINT}/v1/buckets/by-id`, {
       method: "POST",
       headers: header_external,
-      body: JSON.stringify({ bucket_id: _id, filters }),
+      body: JSON.stringify({ bucket_id: _id, filters: { fields: ["name"] } }),
     }).then((res) => res.json());
     if (res.error) return notFound();
 
     const data: Bucket = res.data;
-    const policies = await fetch(`${process.env.API_ENDPOINT}/v1/minio/buckets/policy`, {
-      method: "POST",
-      headers: header_external,
-      body: JSON.stringify({ bucket_name: data.name }),
-    }).then((res) => res.json());
-
     return (
       <main>
         <section>
           <div className="flex flex-row gap-2 items-center justify-between">
-            <h1>{data.name} Policies</h1>
+            <h1>{data.name}: Set Object Lock Config</h1>
 
             <div className="flex flex-row gap-2 items-center">
-              <PermissionsWrapper permissions={[9]}>
-                <Link href={`/buckets/${data._id}/upload`} className="hyve-button">
-                  Edit
-                </Link>
-              </PermissionsWrapper>
-
-              <Link href={`/buckets/${data._id}`} className="hyve-button cancel">
+              <Link href={`/buckets/${data._id}/object-lock-config`} className="hyve-button cancel">
                 Back
               </Link>
             </div>
           </div>
         </section>
 
-        <section>
+        <section className="pb-8">
           <p>
             Lorem ipsum dolor sit amet consectetur adipisicing elit. Omnis officiis laborum quaerat, ea, soluta aliquid porro delectus labore eos ad
             distinctio commodi, dignissimos harum? Delectus ut odit nam amet dolore? Lorem ipsum dolor sit amet consectetur adipisicing elit.
@@ -90,6 +75,10 @@ const Page = async ({ params }: { params: Params }): Promise<React.JSX.Element> 
             laborum deleniti. Lorem ipsum, dolor sit amet consectetur adipisicing elit. Libero mollitia quos perspiciatis! Dicta officia neque
             reprehenderit illum iure eos ratione fugit non ducimus quidem! Temporibus reprehenderit autem magnam optio nisi.
           </p>
+        </section>
+
+        <section>
+          <BucketObjectLockConfigForm bucket_id={_id} />
         </section>
       </main>
     );

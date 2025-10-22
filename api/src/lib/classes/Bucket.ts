@@ -5,6 +5,7 @@ import Validation from "./Validation";
 import handleError from "../handleError";
 import Model from "../../models/Bucket.model";
 import mongoose, { isValidObjectId } from "mongoose";
+import { LifecycleConfig, LifecycleRule } from "minio";
 import applyMongoFilters from "../mongo/applyMongoFilters";
 import getCompanyById from "../mongo/companies/getCompanyById";
 import addCompanyBucketId from "../mongo/companies/addCompanyBucketId";
@@ -15,8 +16,126 @@ export default class Bucket {
   // --------------------------------------------------------------------------
   // Public Static Functions
   // --------------------------------------------------------------------------
+  /* A */
+  public static addBucketLifecycle = async (
+    bucket_id: string,
+    identifier: string,
+    type: string,
+    status: boolean,
+    days: number,
+    prefix?: string
+  ): Promise<ApiResponse> => {
+    try {
+      var valid: boolean | SimpleError = isValidObjectId(bucket_id);
+      if (!valid) return { ...BAD, message: `Invalid bucket_id ${bucket_id}` };
+
+      const bucket = await this.getBucketById(bucket_id, { fields: ["name"] });
+      if (bucket.error) return bucket;
+
+      const bucket_name = bucket.data.name;
+      const rule: LifecycleRule = {
+        ID: identifier,
+        Status: status ? "Enabled" : "Disabled",
+      };
+
+      if (prefix) rule.Filter = { Prefix: prefix };
+
+      switch (type) {
+        case "Expiration":
+          rule.Expiration = { Days: days };
+          break;
+        case "NoncurrentVersionExpiration":
+          rule.NoncurrentVersionExpiration = { NoncurrentDays: days };
+          break;
+        case "AbortIncompleteMultipartUpload":
+          rule.AbortIncompleteMultipartUpload = { DaysAfterInitiation: days };
+          break;
+        default:
+          return { ...BAD, message: `Invalid lifecycle type ${type}` };
+      }
+
+      const config: LifecycleConfig = { Rule: [] };
+      const lifecycle = await Minio.getBucketLifecycle(bucket_name);
+      if (lifecycle.error) return lifecycle;
+      if (!lifecycle.data) config.Rule = [rule];
+      else if (!Array.isArray(lifecycle.data.Rule)) config.Rule = [{ ...lifecycle.data.Rule }, rule];
+      else config.Rule = [...lifecycle.data.Rule, rule];
+
+      return await Minio.setBucketLifecycle(bucket_name, config);
+    } catch (err: any) {
+      return handleError(err);
+    }
+  };
+
+  public static addBucketObjectLockConfig = async (bucket_id: string, config: string): Promise<ApiResponse> => {
+    try {
+      var valid: boolean | SimpleError = isValidObjectId(bucket_id);
+      if (!valid) return { ...BAD, message: `Invalid bucket_id ${bucket_id}` };
+
+      const bucket = await this.getBucketById(bucket_id, { fields: ["name"] });
+      if (bucket.error) return bucket;
+
+      const bucket_name = bucket.data.name;
+      const tags = await Minio.getBucketObjectLockConfig(bucket_name);
+      if (tags.error) return tags;
+
+      var update: any = {};
+      // if (!tags.data) {
+      //   update[`${tag}`] = tag;
+      // } else {
+      //   const exists = tags.data.find((t: any) => t.Key === tag);
+      //   if (exists) return { ...CONFLICT, message: `Tag ${tag} already exists` };
+
+      //   update[`${tag}`] = tag;
+      //   tags.data.forEach((t: any) => {
+      //     update[`${t.Key}`] = t.Value;
+      //   });
+      // }
+
+      return await Minio.setBucketObjectLockConfig(bucket_name, update);
+    } catch (err: any) {
+      return handleError(err);
+    }
+  };
+
+  public static addBucketTag = async (bucket_id: string, tag: string): Promise<ApiResponse> => {
+    try {
+      var valid: boolean | SimpleError = isValidObjectId(bucket_id);
+      if (!valid) return { ...BAD, message: `Invalid bucket_id ${bucket_id}` };
+
+      const bucket = await this.getBucketById(bucket_id, { fields: ["name"] });
+      if (bucket.error) return bucket;
+
+      const bucket_name = bucket.data.name;
+      const tags = await Minio.getBucketTagging(bucket_name);
+      if (tags.error) return tags;
+
+      var update: any = {};
+      if (!tags.data) {
+        update[`${tag}`] = tag;
+      } else {
+        const exists = tags.data.find((t: any) => t.Key === tag);
+        if (exists) return { ...CONFLICT, message: `Tag ${tag} already exists` };
+
+        update[`${tag}`] = tag;
+        tags.data.forEach((t: any) => {
+          update[`${t.Key}`] = t.Value;
+        });
+      }
+
+      return await Minio.setBucketTagging(bucket_name, update);
+    } catch (err: any) {
+      return handleError(err);
+    }
+  };
+
   /* C */
-  public static createBucket = async (bucket_name: string, max_size_bytes: number, company_id: string, permissions: number[]): Promise<ApiResponse> => {
+  public static createBucket = async (
+    bucket_name: string,
+    max_size_bytes: number,
+    company_id: string,
+    permissions: number[]
+  ): Promise<ApiResponse> => {
     try {
       var valid: boolean | SimpleError = isValidObjectId(company_id);
       if (company_id && !valid) return { ...BAD, message: `Invalid company_id ${company_id}` };
@@ -98,6 +217,51 @@ export default class Bucket {
     }
   };
 
+  public static getBucketLifecycles = async (bucket_id: string): Promise<ApiResponse> => {
+    try {
+      const valid = isValidObjectId(bucket_id);
+      if (!valid) return { ...BAD, message: `Invalid bucket_id ${bucket_id}` };
+
+      const bucket = await this.getBucketById(bucket_id, { fields: ["name"] });
+      if (bucket.error) return bucket;
+
+      const bucket_name = bucket.data.name;
+      return await Minio.getBucketLifecycle(bucket_name);
+    } catch (err: any) {
+      return handleError(err);
+    }
+  };
+
+  public static getBucketObjectLockConfig = async (bucket_id: string): Promise<ApiResponse> => {
+    try {
+      const valid = isValidObjectId(bucket_id);
+      if (!valid) return { ...BAD, message: `Invalid bucket_id ${bucket_id}` };
+
+      const bucket = await this.getBucketById(bucket_id, { fields: ["name"] });
+      if (bucket.error) return bucket;
+
+      const bucket_name = bucket.data.name;
+      return await Minio.getBucketObjectLockConfig(bucket_name);
+    } catch (err: any) {
+      return handleError(err);
+    }
+  };
+
+  public static getBucketTags = async (bucket_id: string): Promise<ApiResponse> => {
+    try {
+      const valid = isValidObjectId(bucket_id);
+      if (!valid) return { ...BAD, message: `Invalid bucket_id ${bucket_id}` };
+
+      const bucket = await this.getBucketById(bucket_id, { fields: ["name"] });
+      if (bucket.error) return bucket;
+
+      const bucket_name = bucket.data.name;
+      return await Minio.getBucketTagging(bucket_name);
+    } catch (err: any) {
+      return handleError(err);
+    }
+  };
+
   public static getObject = async (bucket_id: string, object_name: string): Promise<ApiResponse> => {
     try {
       var valid: boolean | SimpleError = isValidObjectId(bucket_id);
@@ -120,7 +284,12 @@ export default class Bucket {
     }
   };
 
-  public static getObjectPresignedUrl = async (bucket_id: string, object_name: string, expiration_s?: number, download?: boolean): Promise<ApiResponse> => {
+  public static getObjectPresignedUrl = async (
+    bucket_id: string,
+    object_name: string,
+    expiration_s?: number,
+    download?: boolean
+  ): Promise<ApiResponse> => {
     try {
       var valid: boolean | SimpleError = isValidObjectId(bucket_id);
       if (!valid) return { ...BAD, message: `Invalid bucket_id ${bucket_id}` };
@@ -228,10 +397,72 @@ export default class Bucket {
       if (company_id) {
         const company_update = await removeCompanyBucketId(company_id, bucket_id);
         if (company_update.error) {
-          const res = { ...PARTIAL_UPDATE, message: `Bucket ${bucket_name} removed from Minio and database but failed to remove ${bucket_id} from company ${company_id}` };
+          const res = {
+            ...PARTIAL_UPDATE,
+            message: `Bucket ${bucket_name} removed from Minio and database but failed to remove ${bucket_id} from company ${company_id}`,
+          };
           logError(res);
           return res;
         }
+      }
+
+      return NO_CONTENT;
+    } catch (err: any) {
+      return handleError(err);
+    }
+  };
+
+  public static removeBucketLifecycle = async (bucket_id: string, identifier: string): Promise<ApiResponse> => {
+    try {
+      var valid: boolean | SimpleError = isValidObjectId(bucket_id);
+      if (!valid) return { ...BAD, message: `Invalid bucket_id ${bucket_id}` };
+
+      const bucket = await this.getBucketById(bucket_id, { fields: ["name"] });
+      if (bucket.error) return bucket;
+
+      const bucket_name = bucket.data.name;
+      const config: LifecycleConfig = { Rule: [] };
+      const lifecycle = await Minio.getBucketLifecycle(bucket_name);
+      if (lifecycle.error) return lifecycle;
+      if (!lifecycle.data) return NO_CONTENT;
+      if (!Array.isArray(lifecycle.data.Rule)) {
+        if (lifecycle.data.Rule.ID === identifier) return await Minio.removeBucketLifecycle(bucket_name);
+        else return NO_CONTENT;
+      } else config.Rule = lifecycle.data.Rule.filter((r: LifecycleRule) => r.ID !== identifier);
+
+      const update = await Minio.setBucketLifecycle(bucket_name, config);
+      if (update.error) return update;
+      return NO_CONTENT;
+    } catch (err: any) {
+      return handleError(err);
+    }
+  };
+
+  public static removeBucketTag = async (bucket_id: string, tag: string): Promise<ApiResponse> => {
+    try {
+      var valid: boolean | SimpleError = isValidObjectId(bucket_id);
+      if (!valid) return { ...BAD, message: `Invalid bucket_id ${bucket_id}` };
+
+      const bucket = await this.getBucketById(bucket_id, { fields: ["name"] });
+      if (bucket.error) return bucket;
+
+      const bucket_name = bucket.data.name;
+      const tags = await Minio.getBucketTagging(bucket_name);
+      if (tags.error) return tags;
+      if (!tags.data) return NO_CONTENT;
+
+      const update: any = {};
+      tags.data.forEach((t: any) => {
+        if (t.Key == `${tag}`) return;
+        update[`${t.Key}`] = t.Value;
+      });
+
+      if (Object.keys(update).length === 0) {
+        const res = await Minio.removeBucketTagging(bucket_name);
+        if (res.error) return res;
+      } else {
+        const res = await Minio.setBucketTagging(bucket_name, update);
+        if (res.error) return res;
       }
 
       return NO_CONTENT;
@@ -264,7 +495,10 @@ export default class Bucket {
         consumption_bytes: bucket.data.consumption_bytes - object.data.size,
       });
       if (bucket_update.error) {
-        return { ...PARTIAL_UPDATE, message: `Removed object ${object_name} from bucket ${bucket_name} but failed to update bucket data ${bucket_id}` };
+        return {
+          ...PARTIAL_UPDATE,
+          message: `Removed object ${object_name} from bucket ${bucket_name} but failed to update bucket data ${bucket_id}`,
+        };
       }
 
       return NO_CONTENT;
@@ -304,7 +538,12 @@ export default class Bucket {
     }
   };
 
-  public static uploadObject = async (bucket_id: string, file: Express.Multer.File, object_name?: string, from_source?: string): Promise<ApiResponse> => {
+  public static uploadObject = async (
+    bucket_id: string,
+    file: Express.Multer.File,
+    object_name?: string,
+    from_source?: string
+  ): Promise<ApiResponse> => {
     try {
       var valid: boolean | SimpleError = isValidObjectId(bucket_id);
       if (!valid) return { ...BAD, message: `Invalid bucket_id ${bucket_id}` };

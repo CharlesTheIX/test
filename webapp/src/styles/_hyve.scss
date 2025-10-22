@@ -219,24 +219,31 @@ a {
   background-color: $white;
 }
 
-.buckets-dashboard {
-  @apply w-full flex flex-row justify-start items-start gap-8;
+.bucket-dashboard {
+  @apply w-full flex flex-row justify-start items-start;
+  border: $border_width solid $grey;
   margin: 0 auto;
   max-width: $screen_max_width;
 
-
   aside {
-    @apply p-4 pt-17;
+    @apply h-full;
+    border-right: $border_width solid $grey;
     min-width: 200px;
 
     nav ul {
-      @apply flex flex-col gap-2;
+      @apply flex flex-col;
 
-      li {
-        @apply flex flex-row gap-2 items-center justify-start;
+      li a {
+        @apply flex flex-row gap-2 items-center justify-start p-2;
+        background-color: $table-row-light;
+        color: $white;
       }
-
     }
+  }
+
+  .hyve-card {
+    @apply h-full;
+    border: none;
   }
 }
 

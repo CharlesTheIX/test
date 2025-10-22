@@ -10,21 +10,25 @@ import { Fragment, JSX, useState } from "react";
 import LoadingContainer from "@/components/LoadingIcon";
 import deleteUserById from "@/lib/users/deleteUserById";
 import { useToastContext } from "@/contexts/toastContext";
+import deleteBucketTag from "@/lib/buckets/deleteBucketTag";
 import deleteBucketById from "@/lib/buckets/deleteBucketById";
 import getErrorResponseTitle from "@/lib/getErrorResponseTitle";
 import PermissionsWrapper from "@/components/PermissionsWrapper";
 import deleteCompanyById from "@/lib/companies/deleteCompanyById";
 import { default_simple_error, default_toast_item } from "@/globals";
+import deleteBucketLifecycle from "@/lib/buckets/deleteBucketLifecycle";
 import deleteBucketObjectById from "@/lib/buckets/deleteBucketObjectById";
 
 type Props = {
   list: any[];
   _id?: string;
+  type: string;
   activeData: any;
-  type: TableType;
   loading: boolean;
   modalOpen: boolean;
   headers: TableHeader[];
+  show_filters?: boolean;
+  show_pagination?: boolean;
   filters: ApiRequestFilters;
   meta: Partial<ApiResponseMeta>;
   getTableBody: (td: any, h: TableHeader) => JSX.Element;
@@ -36,7 +40,25 @@ type Props = {
 };
 
 const Table: React.FC<Props> = (props: Props) => {
-  const { type, list, meta, loading, filters, headers, modalOpen, setHeaders, setFilters, activeData, setModalOpen, getTableBody, getTableData, setActiveData, _id } = props;
+  const {
+    _id,
+    type,
+    list,
+    meta,
+    loading,
+    filters,
+    headers,
+    modalOpen,
+    setHeaders,
+    setFilters,
+    activeData,
+    setModalOpen,
+    getTableBody,
+    getTableData,
+    setActiveData,
+    show_filters = true,
+    show_pagination = true,
+  } = props;
   const router = useRouter();
   const { setToastItems } = useToastContext();
   const storage_key = getTableStorageKey(type);
@@ -44,7 +66,20 @@ const Table: React.FC<Props> = (props: Props) => {
   const [modalLoading, setModalLoading] = useState<boolean>(false);
   const [modalError, setModalError] = useState<SimpleError>(default_simple_error);
 
-  const navigate = (uri: string): void => {
+  const navigate = (td: any): void => {
+    var uri = "";
+
+    switch (type) {
+      case "buckets":
+      case "users":
+      case "companies":
+        uri = `/${type}/${td._id}`;
+        break;
+      case "objects":
+        uri = `/buckets/${_id}/objects/${td.name}`;
+        break;
+    }
+
     if (!uri) return;
     router.push(uri);
   };
@@ -68,9 +103,22 @@ const Table: React.FC<Props> = (props: Props) => {
           res = await deleteBucketById(data_key);
           break;
 
+        case "bucket_lifecycle":
+          res = await deleteBucketLifecycle(_id || "", data_key);
+          break;
+
+        case "bucket_tagging":
+          res = await deleteBucketTag(_id || "", data_key);
+          break;
+
         case "objects":
           res = await deleteBucketObjectById(_id || "", data_key);
           break;
+
+        default:
+          setActiveData({});
+          setModalLoading(false);
+          return setModalError({ error: true, title: "Error", message: "Invalid table type" });
       }
 
       if (res.error) {
@@ -108,7 +156,17 @@ const Table: React.FC<Props> = (props: Props) => {
     <div className="hyve-table">
       {!loading && list.length === 0 && <p>No data to display.</p>}
 
-      {list.length > 0 && <TableControls filters={filters} loading={loading} headers={headers} setHeaders={setHeaders} storage_key={storage_key} getTableData={getTableData} />}
+      {list.length > 0 && (
+        <TableControls
+          filters={filters}
+          loading={loading}
+          headers={headers}
+          setHeaders={setHeaders}
+          storage_key={storage_key}
+          getTableData={getTableData}
+          show_filters={show_filters}
+        />
+      )}
 
       {loading && <LoadingContainer />}
 
@@ -122,10 +180,10 @@ const Table: React.FC<Props> = (props: Props) => {
                 return (
                   <tr
                     key={key}
+                    onClick={() => navigate(td)}
                     onMouseOver={() => setHover(key)}
                     onMouseLeave={() => setHover(null)}
                     className={hover === key ? "hover" : ""}
-                    onClick={() => navigate(`/${type}/${td._id || td.name}`)}
                   >
                     {headers.map((h, key) => {
                       if (!h.visible) return <Fragment key={key}></Fragment>;
@@ -146,8 +204,14 @@ const Table: React.FC<Props> = (props: Props) => {
         </div>
       )}
 
-      {list.length > 0 && (
-        <Paginator filters={filters} list_length={list.length} getTableData={getTableData} updateFilters={updateFilters} collection_count={meta.collection_count || 0} />
+      {list.length > 0 && show_pagination && (
+        <Paginator
+          filters={filters}
+          list_length={list.length}
+          getTableData={getTableData}
+          updateFilters={updateFilters}
+          collection_count={meta.collection_count || 0}
+        />
       )}
 
       <DeletionModal
@@ -157,7 +221,7 @@ const Table: React.FC<Props> = (props: Props) => {
         modalLoading={modalLoading}
         setModalOpen={setModalOpen}
         setModalError={setModalError}
-        data_key={activeData._id || activeData.name || ""}
+        data_key={activeData._id || activeData.name || activeData.ID || ""}
       />
     </div>
   );

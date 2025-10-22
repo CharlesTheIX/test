@@ -117,6 +117,142 @@ router.route("/exists").post(async (request: Request, response: Response) => {
   }
 });
 
+router.route("/lifecycle").delete(async (request: Request, response: Response) => {
+  const { bucket_id, identifier } = request.body;
+  if (!bucket_id || !identifier) {
+    return response.json({ ...BAD, message: `Missing required value(s): bucket_id, identifier` });
+  }
+
+  try {
+    const res = await Bucket.removeBucketLifecycle(bucket_id, identifier);
+    return response.json(res);
+  } catch (err: any) {
+    logError({ ...SERVER_ERROR, message: err.message });
+    return response.status(SERVER_ERROR.status).json({ ...SERVER_ERROR, data: err });
+  }
+});
+
+router.route("/lifecycle").patch(async (request: Request, response: Response) => {
+  const { bucket_id, days, identifier, type, status, prefix } = request.body;
+  if (!bucket_id || !days || !identifier || !type) {
+    return response.json({ ...BAD, message: `Missing required value(s): bucket_id, days, identifier, type, status, prefix` });
+  }
+
+  try {
+    const res = await Bucket.addBucketLifecycle(bucket_id, identifier, type, status, days, prefix);
+    return response.json(res);
+  } catch (err: any) {
+    logError({ ...SERVER_ERROR, message: err.message });
+    return response.status(SERVER_ERROR.status).json({ ...SERVER_ERROR, data: err });
+  }
+});
+
+router.route("/lifecycle").post(async (request: Request, response: Response) => {
+  const { bucket_id } = request.body;
+  if (!bucket_id) {
+    return response.json({ ...BAD, message: `Missing required value(s): bucket_id` });
+  }
+
+  try {
+    const res = await Bucket.getBucketLifecycles(bucket_id);
+    return response.json(res);
+  } catch (err: any) {
+    logError({ ...SERVER_ERROR, message: err.message });
+    return response.status(SERVER_ERROR.status).json({ ...SERVER_ERROR, data: err });
+  }
+});
+
+router.route("/tagging").delete(async (request: Request, response: Response) => {
+  const { bucket_id, tag } = request.body;
+  if (!bucket_id || !tag) {
+    return response.json({ ...BAD, message: `Missing required value(s): bucket_id, tag` });
+  }
+
+  try {
+    const res = await Bucket.removeBucketTag(bucket_id, tag);
+    return response.json(res);
+  } catch (err: any) {
+    logError({ ...SERVER_ERROR, message: err.message });
+    return response.status(SERVER_ERROR.status).json({ ...SERVER_ERROR, data: err });
+  }
+});
+
+router.route("/tagging").patch(async (request: Request, response: Response) => {
+  const { bucket_id, tag } = request.body;
+  if (!bucket_id || !tag) {
+    return response.json({ ...BAD, message: `Missing required value(s): bucket_id, tag` });
+  }
+
+  try {
+    const res = await Bucket.addBucketTag(bucket_id, tag);
+    return response.json(res);
+  } catch (err: any) {
+    logError({ ...SERVER_ERROR, message: err.message });
+    return response.status(SERVER_ERROR.status).json({ ...SERVER_ERROR, data: err });
+  }
+});
+
+router.route("/tagging").post(async (request: Request, response: Response) => {
+  const { bucket_id } = request.body;
+  if (!bucket_id) {
+    return response.json({ ...BAD, message: `Missing required value(s): bucket_id` });
+  }
+
+  try {
+    const res = await Bucket.getBucketTags(bucket_id);
+    return response.json(res);
+  } catch (err: any) {
+    logError({ ...SERVER_ERROR, message: err.message });
+    return response.status(SERVER_ERROR.status).json({ ...SERVER_ERROR, data: err });
+  }
+});
+
+// router.route("/object-lock-config").delete(async (request: Request, response: Response) => {
+//   const { bucket_id, config } = request.body;
+//   if (!bucket_id || !config) {
+//     return response.json({ ...BAD, message: `Missing required value(s): bucket_id, config` });
+//   }
+
+//   try {
+//     const res = await Bucket.removeBucketObjectLockConfig(bucket_id, config);
+//     return response.json(res);
+//   } catch (err: any) {
+//     logError({ ...SERVER_ERROR, message: err.message });
+//     return response.status(SERVER_ERROR.status).json({ ...SERVER_ERROR, data: err });
+//   }
+// });
+
+router.route("/object-lock-config").patch(async (request: Request, response: Response) => {
+  const { bucket_id, config } = request.body;
+  if (!bucket_id || !config) {
+    return response.json({ ...BAD, message: `Missing required value(s): bucket_id, config` });
+  }
+
+  try {
+    const res = await Bucket.addBucketObjectLockConfig(bucket_id, config);
+    return response.json(res);
+  } catch (err: any) {
+    logError({ ...SERVER_ERROR, message: err.message });
+    return response.status(SERVER_ERROR.status).json({ ...SERVER_ERROR, data: err });
+  }
+});
+
+router.route("/object-lock-config").post(async (request: Request, response: Response) => {
+  const { bucket_id } = request.body;
+  if (!bucket_id) {
+    return response.json({ ...BAD, message: `Missing required value(s): bucket_id` });
+  }
+
+  try {
+    const res = await Bucket.getBucketObjectLockConfig(bucket_id);
+    return response.json(res);
+  } catch (err: any) {
+    logError({ ...SERVER_ERROR, message: err.message });
+    return response.status(SERVER_ERROR.status).json({ ...SERVER_ERROR, data: err });
+  }
+});
+
+// Objects
 router.route("/objects").post(async (request: Request, response: Response) => {
   const { bucket_id } = request.body;
   if (!bucket_id) return response.json({ ...BAD, message: `Missing required value(s): bucket_id` });

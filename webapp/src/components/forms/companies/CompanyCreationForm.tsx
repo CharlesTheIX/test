@@ -94,7 +94,7 @@ const CompanyCreationForm: React.FC<Props> = (props: Props) => {
             if (err) return;
             invalid = getInputError("mongo_id", p, false);
             if (invalid.error) {
-              inputs_invalid.permissions = invalid.error;
+              inputs_invalid.user_ids = invalid.error;
               message += `- Users: ${invalid.message}\n`;
             }
           });

@@ -4,30 +4,30 @@ import Storage from "@/lib/classes/Storage";
 import { useRouter } from "next/navigation";
 import validateRequest from "./validateRequest";
 import { useRef, useState, useEffect } from "react";
-import TextInput from "@/components/inputs/TextInput";
 import LoadingContainer from "@/components/LoadingIcon";
 import { useToastContext } from "@/contexts/toastContext";
+import SelectInput from "@/components/inputs/SelectInput";
+import NumberInput from "@/components/inputs/NumberInput";
 import ErrorContainer from "@/components/forms/ErrorContainer";
 import getErrorResponseTitle from "@/lib/getErrorResponseTitle";
 import ButtonContainer from "@/components/forms/ButtonContainer";
 import CompletionContainer from "@/components/forms/CompletionContainer";
-import CompanyDropdown from "@/components/inputs/dropdowns/CompanyDropdown";
-import BucketSizeDropdown from "@/components/inputs/dropdowns/BucketSizeDropdown";
 import { default_simple_error, default_toast_item, header_internal } from "@/globals";
-import PermissionsMultiDropdown from "@/components/inputs/dropdowns/PermissionsMultiDropdown";
 
 type Props = {
+  bucket_id: string;
   redirect?: string;
 };
 
-const storage_key = "bucket_creation_form_data";
-const BucketCreationForm: React.FC<Props> = (props: Props) => {
-  const { redirect = `/buckets` } = props;
+const storage_key = "bucket_lifecycle_creation_form_data";
+const BucketObjectLockConfigForm: React.FC<Props> = (props: Props) => {
+  const { bucket_id, redirect = `/buckets/${bucket_id}/lifecycles` } = props;
   const router = useRouter();
   const { setToastItems } = useToastContext();
   const form_ref = useRef<HTMLFormElement>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [complete, setComplete] = useState<boolean>(false);
+  const [showPrefix, setShowPrefix] = useState<boolean>(false);
   const [error, setError] = useState<SimpleError>(default_simple_error);
   const [storageValue, setStorageValue] = useState<StorageValue | null>(null);
   const [inputErrors, setInputErrors] = useState<{ [key: string]: boolean }>({});
@@ -40,28 +40,27 @@ const BucketCreationForm: React.FC<Props> = (props: Props) => {
     setInputErrors({});
     setError(default_simple_error);
     const form_data = new FormData(form);
-    const name = form_data.get("name")?.toString() || "";
-    const company_id = parseJSON(form_data.get("company_id")?.toString());
-    const permissions = parseJSON(form_data.get("permissions")?.toString()) ?? [];
-    const max_size_bytes = parseJSON(form_data.get("max_size_bytes")?.toString());
-    const request_data: Partial<Bucket> = {
-      name,
-      company_id: company_id?.value || undefined,
-      max_size_bytes: parseInt(max_size_bytes?.value),
-      permissions: permissions.map((p: Option) => p.value),
+    const validity = form_data.get("validity") || "365";
+    const unit = parseJSON(form_data.get("mode")?.toString());
+    const mode = parseJSON(form_data.get("unit")?.toString());
+    const request_data: any = {
+      bucket_id,
+      unit: unit?.value,
+      mode: mode?.value,
+      validity: parseInt(validity as string),
     };
 
     const validation = validateRequest(request_data);
     setInputErrors(validation.invalid_inputs);
-    Storage.setStorageValue(storage_key, { ...request_data, max_size_bytes, company_id, permissions });
+    Storage.setStorageValue(storage_key, { ...request_data, unit, mode });
     if (validation.simple_error.error) {
       setLoading(false);
       return setError(validation.simple_error);
     }
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_HOST}/api/buckets/create`, {
-        method: "PUT",
+      const response = await fetch(`${process.env.NEXT_PUBLIC_HOST}/api/buckets/object-lock-config`, {
+        method: "PATCH",
         headers: header_internal,
         body: JSON.stringify(request_data),
       }).then((res: any) => res.json());
@@ -75,7 +74,7 @@ const BucketCreationForm: React.FC<Props> = (props: Props) => {
       setToastItems((prev) => {
         const item: ToastItem = {
           ...default_toast_item,
-          title: "Bucket created successfully",
+          title: "Bucket object lock config set successfully",
         };
         const next = [...prev, item];
         return next;
@@ -106,33 +105,52 @@ const BucketCreationForm: React.FC<Props> = (props: Props) => {
     >
       <div className="content-container">
         <div className="inputs">
-          <div className="w-full">
-            <TextInput name="name" required={true} label="Bucket name" error={!!inputErrors.name} default_value={storageValue?.value?.name} />
-          </div>
-
           <div className="w-full flex flex-row gap-2 items-center justify-between">
-            <CompanyDropdown label="Company" required={false} name="company_id" error={!!inputErrors.company_id} default_value={storageValue?.value?.company_id} />
-
-            <BucketSizeDropdown
+            <SelectInput
+              name="mode"
+              label="Mode"
               required={true}
-              label="Bucket Size"
-              name="max_size_bytes"
-              error={!!inputErrors.max_size_bytes}
-              default_value={storageValue?.value?.max_size_bytes}
+              error={!!inputErrors.mode}
+              default_value={storageValue?.value?.mode || { value: "COMPLIANCE", label: "Compliance" }}
+              options={[
+                { value: "COMPLIANCE", label: "Compliance" },
+                { value: "GOVERNANCE", label: "Governance" },
+              ]}
             />
 
-            <PermissionsMultiDropdown required={true} name="permissions" label="Permissions" error={!!inputErrors.permissions} default_value={storageValue?.value?.permissions} />
+            <SelectInput
+              name="unit"
+              label="Unit"
+              required={true}
+              error={!!inputErrors.unit}
+              default_value={storageValue?.value?.unit || { value: "Days", label: "Days" }}
+              options={[
+                { value: "Days", label: "Days" },
+                { value: "Years", label: "Years" },
+              ]}
+            />
+
+            <NumberInput
+              min={1}
+              step={1}
+              max={365}
+              name="validity"
+              required={true}
+              label="Validity"
+              error={!!inputErrors.validity}
+              default_value={storageValue?.value?.validity || 365}
+            />
           </div>
         </div>
 
-        <ButtonContainer disabled={loading} callback={handleFormSubmission} text="Create" />
+        <ButtonContainer disabled={loading} callback={handleFormSubmission} text="Set" />
       </div>
 
       {loading && <LoadingContainer />}
       {error.error && error.message && <ErrorContainer error={error} />}
-      {complete && <CompletionContainer title="Bucket Created Successfully" />}
+      {complete && <CompletionContainer title="Bucket Object Lock Config Set Successfully" />}
     </form>
   );
 };
 
-export default BucketCreationForm;
+export default BucketObjectLockConfigForm;

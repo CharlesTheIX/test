@@ -4,9 +4,9 @@ import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import validateRequest from "./validateRequest";
 import Permissions from "@/lib/classes/Permissions";
+import BucketSizes from "@/lib/classes/BucketSizes";
 import TextInput from "@/components/inputs/TextInput";
 import LoadingContainer from "@/components/LoadingIcon";
-import NumberInput from "@/components/inputs/NumberInput";
 import ErrorContainer from "@/components/forms/ErrorContainer";
 import getErrorResponseTitle from "@/lib/getErrorResponseTitle";
 import ButtonContainer from "@/components/forms/ButtonContainer";
@@ -14,7 +14,6 @@ import { default_simple_error, header_internal } from "@/globals";
 import CompletionContainer from "@/components/forms/CompletionContainer";
 import BucketSizeDropdown from "@/components/inputs/dropdowns/BucketSizeDropdown";
 import PermissionsMultiDropdown from "@/components/inputs/dropdowns/PermissionsMultiDropdown";
-import BucketSizes from "@/lib/classes/BucketSizes";
 
 type Props = {
   redirect?: string;
@@ -90,16 +89,6 @@ const BucketEditForm: React.FC<Props> = (props: Props) => {
           </div>
 
           <div className="w-full flex flex-row gap-2 items-center justify-between">
-            {/* <NumberInput
-              min={1}
-              required={true}
-              label="Max size"
-              name="max_size_bytes"
-              max={1000000000000000}
-              default_value={data.max_size_bytes}
-              error={!!inputErrors.max_size_bytes}
-            /> */}
-
             <BucketSizeDropdown
               required={true}
               label="Bucket Size"

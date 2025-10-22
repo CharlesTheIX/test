@@ -6,6 +6,7 @@ import Refresh from "@/components/svgs/Refresh";
 type Props = {
   loading: boolean;
   storage_key: string;
+  show_filters?: boolean;
   headers: TableHeader[];
   filters: ApiRequestFilters;
   getTableData: (filters: ApiRequestFilters) => Promise<void>;
@@ -13,10 +14,14 @@ type Props = {
 };
 
 const TableControls: React.FC<Props> = (props: Props) => {
-  const { loading, storage_key, headers, filters, getTableData, setHeaders } = props;
+  const { loading, show_filters = true, storage_key, headers, filters, getTableData, setHeaders } = props;
   return (
     <div className="table-controls">
-      <ColumnFilters filters={filters} headers={headers} setHeaders={setHeaders} storage_key={storage_key} />
+      {show_filters ? (
+        <ColumnFilters filters={filters} headers={headers} setHeaders={setHeaders} storage_key={storage_key} />
+      ) : (
+        <span className="w-full" />
+      )}
 
       <div
         className="refresh-button"

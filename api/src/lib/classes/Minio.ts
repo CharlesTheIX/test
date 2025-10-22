@@ -4,7 +4,15 @@ import getEnvVars from "../getEnvVars";
 import handleError from "../handleError";
 import { BAD, CONFLICT, DB_UPDATED, FORBIDDEN, NO_CONTENT, NOT_FOUND, OK } from "../../globals";
 import { Client, CopyDestinationOptions, CopySourceOptions, NotificationConfig, RemoveOptions } from "minio";
-import { Tags, ObjectLockInfo, LifecycleConfig, EncryptionConfig, PreSignRequestParams, ReplicationConfigOpts, BucketVersioningConfiguration } from "minio/dist/main/internal/type";
+import {
+  ObjectLockInfo,
+  LifecycleConfig,
+  EncryptionConfig,
+  type RETENTION_MODES,
+  PreSignRequestParams,
+  ReplicationConfigOpts,
+  BucketVersioningConfiguration,
+} from "minio/dist/main/internal/type";
 
 export default class Minio {
   // --------------------------------------------------------------------------
@@ -15,10 +23,6 @@ export default class Minio {
   private static bucket_versioning_default: BucketVersioningConfiguration = { Status: "Enabled", ExcludedPrefixes: [], ExcludeFolders: false };
   private static list_objects_default_options = { prefix: "", recursive: false };
   private static remove_object_default_options = {};
-
-  private static test_bucket_lifecycle_1: LifecycleConfig = { Rule: [{ ID: "expire-logs", Status: "Enabled", Filter: { Prefix: "logs/" }, Expiration: { Days: 10 } }] };
-  private static test_bucket_lifecycle_2: LifecycleConfig = { Rule: [{ ID: "expire-old-versions", Status: "Enabled", NoncurrentVersionExpiration: { NoncurrentDays: 30 } }] };
-  private static test_bucket_lifecycle_3: LifecycleConfig = { Rule: [{ ID: "expire-incomplete", Status: "Enabled", AbortIncompleteMultipartUpload: { DaysAfterInitiation: 30 } }] };
 
   // --------------------------------------------------------------------------
   // Private Static Functions
@@ -53,7 +57,10 @@ export default class Minio {
     }
   };
 
-  public static copyObject = async (props: { src: { bucket_name: string; object_name: string }; dest: { bucket_name: string; object_name: string } }): Promise<ApiResponse> => {
+  public static copyObject = async (props: {
+    src: { bucket_name: string; object_name: string };
+    dest: { bucket_name: string; object_name: string };
+  }): Promise<ApiResponse> => {
     const { src, dest } = props;
 
     try {
@@ -270,7 +277,12 @@ export default class Minio {
     }
   };
 
-  public static getObjectPresignedUrl = async (object_name: string, bucket_name: string, expires_s: number = 3600, download: boolean = false): Promise<ApiResponse> => {
+  public static getObjectPresignedUrl = async (
+    object_name: string,
+    bucket_name: string,
+    expires_s: number = 3600,
+    download: boolean = false
+  ): Promise<ApiResponse> => {
     try {
       var exists_res = await this.getBucketExists(bucket_name);
       if (exists_res.error) return exists_res;
@@ -301,7 +313,10 @@ export default class Minio {
     }
   };
 
-  public static listIncompleteUploads = async (bucket_name: string, options: any = { ...this.list_objects_default_options }): Promise<ApiResponse> => {
+  public static listIncompleteUploads = async (
+    bucket_name: string,
+    options: any = { ...this.list_objects_default_options }
+  ): Promise<ApiResponse> => {
     try {
       const exists_res = await this.getBucketExists(bucket_name);
       if (exists_res.error) return exists_res;
@@ -427,7 +442,11 @@ export default class Minio {
     }
   };
 
-  public static removeObject = async (object_name: string, bucket_name: string, options: RemoveOptions = { ...this.remove_object_default_options }): Promise<ApiResponse> => {
+  public static removeObject = async (
+    object_name: string,
+    bucket_name: string,
+    options: RemoveOptions = { ...this.remove_object_default_options }
+  ): Promise<ApiResponse> => {
     try {
       var exists_res = await this.getBucketExists(bucket_name);
       if (exists_res.error) return exists_res;
@@ -527,7 +546,7 @@ export default class Minio {
     }
   };
 
-  public static setBucketTagging = async (bucket_name: string, tags: Tags): Promise<ApiResponse> => {
+  public static setBucketTagging = async (bucket_name: string, tags: any): Promise<ApiResponse> => {
     try {
       const exists_res = await this.getBucketExists(bucket_name);
       if (exists_res.error) return exists_res;
@@ -554,7 +573,12 @@ export default class Minio {
   };
 
   /* U */
-  public static uploadObject = async (bucket_name: string, file: Express.Multer.File, object_name?: string, from_source?: string): Promise<ApiResponse> => {
+  public static uploadObject = async (
+    bucket_name: string,
+    file: Express.Multer.File,
+    object_name?: string,
+    from_source?: string
+  ): Promise<ApiResponse> => {
     try {
       var exists_res = await this.getBucketExists(bucket_name);
       if (exists_res.error) return exists_res;

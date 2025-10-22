@@ -1,10 +1,13 @@
+import Link from "next/link";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { header_external } from "@/globals";
 import { default_404_metadata, site_name } from "@/globals";
-import ObjectUploadForm from "@/components/forms/buckets/objects/ObjectUploadForm";
+import ObjectUploadForm from "@/components/forms/buckets/ObjectUploadForm";
 
 type Params = Promise<{ _id: string }>;
+
+export const revalidate = 3600; // seconds (1 hour)
 
 export const generateMetadata = async ({ params }: { params: Params }): Promise<Metadata> => {
   const { _id } = await params;
@@ -56,10 +59,24 @@ const Page = async ({ params }: { params: Params }): Promise<React.JSX.Element> 
       <main>
         <section>
           <div className="flex flex-row gap-2 items-center justify-between">
+            <h1>{data.name}: Object Upload</h1>
+
             <div className="flex flex-row gap-2 items-center">
-              <h1>Object Upload</h1>
+              <Link href={`/buckets/${data._id}/objects`} className="hyve-button cancel">
+                Back
+              </Link>
             </div>
           </div>
+        </section>
+
+        <section className="pb-8">
+          <p>
+            Lorem ipsum dolor sit amet consectetur adipisicing elit. Omnis officiis laborum quaerat, ea, soluta aliquid porro delectus labore eos ad
+            distinctio commodi, dignissimos harum? Delectus ut odit nam amet dolore? Lorem ipsum dolor sit amet consectetur adipisicing elit.
+            Voluptate iure eum amet, veritatis dicta ea natus pariatur nobis nisi ut consequuntur temporibus blanditiis vel? Nisi optio praesentium ab
+            laborum deleniti. Lorem ipsum, dolor sit amet consectetur adipisicing elit. Libero mollitia quos perspiciatis! Dicta officia neque
+            reprehenderit illum iure eos ratione fugit non ducimus quidem! Temporibus reprehenderit autem magnam optio nisi.
+          </p>
         </section>
 
         <section>

@@ -1,8 +1,9 @@
-export const object_mongo_population_fields: string[] = [];
 export const object_mongo_selection_fields: string[] = [];
+export const object_mongo_population_fields: string[] = [];
 export const bucket_storage_key: string = "buckets_table_headers";
 export const bucket_mongo_population_fields: string[] = ["company_id"];
 export const object_storage_key: string = "buckets_objects_table_headers";
+
 export const bucket_table_headers: TableHeader[] = [
   {
     value: "name",
@@ -114,6 +115,54 @@ export const object_table_headers: TableHeader[] = [
     value: "delete",
     label: "Delete",
     sortable: false,
+    visible: true,
+    permissions: [9],
+  },
+];
+
+export const bucket_lifecycle_table_headers: TableHeader[] = [
+  {
+    value: "ID",
+    label: "Identifier",
+    visible: true,
+  },
+  {
+    value: "Status",
+    label: "Status",
+    visible: true,
+  },
+  {
+    value: "Filter",
+    label: "Target URI",
+    visible: true,
+  },
+  {
+    value: "Expiration",
+    label: "Interval (days)",
+    visible: true,
+  },
+  {
+    value: "delete",
+    label: "Delete",
+    visible: true,
+    permissions: [9],
+  },
+];
+
+export const bucket_tagging_table_headers: TableHeader[] = [
+  {
+    value: "Key",
+    label: "Key",
+    visible: true,
+  },
+  {
+    value: "Value",
+    label: "Value",
+    visible: true,
+  },
+  {
+    value: "delete",
+    label: "Delete",
     visible: true,
     permissions: [9],
   },

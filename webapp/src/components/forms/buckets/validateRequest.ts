@@ -1,6 +1,6 @@
 import getInputError from "@/lib/getInputError";
 
-export default (data: Partial<Bucket>): { invalid_inputs: { [key: string]: boolean }; simple_error: SimpleError } => {
+export default (data: any): { invalid_inputs: { [key: string]: boolean }; simple_error: SimpleError } => {
   var invalid;
   const inputs_invalid: { [key: string]: boolean } = {};
   var message = "Please address the following errors:\n";
@@ -29,7 +29,7 @@ export default (data: Partial<Bucket>): { invalid_inputs: { [key: string]: boole
           message += `- Permissions: At least one value is required.\n`;
         }
 
-        data[key]?.forEach((p) => {
+        data[key]?.forEach((p: any) => {
           if (err) return;
           invalid = getInputError("number", p, true);
           if (invalid.error) {
@@ -39,11 +39,53 @@ export default (data: Partial<Bucket>): { invalid_inputs: { [key: string]: boole
         });
         break;
 
+      case "tag":
+        var err: boolean = false;
+        invalid = getInputError("bucket_name", data[key], false);
+        if (invalid.error) {
+          inputs_invalid.lifecycle_type = invalid.error;
+          message += `- Tag: ${invalid.message}\n`;
+        }
+        break;
+
       case "company_id":
         invalid = getInputError("mongo_id", data[key], false);
         if (invalid.error) {
           inputs_invalid.company_id = invalid.error;
           message += `- Company: ${invalid.message}\n`;
+        }
+        break;
+
+      case "lifecycle_type":
+        var err: boolean = false;
+        invalid = getInputError("name", data[key], false);
+        if (invalid.error) {
+          inputs_invalid.lifecycle_type = invalid.error;
+          message += `- Type: ${invalid.message}\n`;
+        }
+        break;
+
+      case "lifecycle_prefix":
+        invalid = getInputError("text", data[key], data.lifecycle_type === "Expiration");
+        if (invalid.error) {
+          inputs_invalid.lifecycle_prefix = invalid.error;
+          message += `- Target URI: ${invalid.message}\n`;
+        }
+        break;
+
+      case "days":
+        invalid = getInputError("number", data[key], true);
+        if (invalid.error) {
+          inputs_invalid.days = invalid.error;
+          message += `- Interval (days): ${invalid.message}\n`;
+        }
+        break;
+
+      case "identifier":
+        invalid = getInputError("name", data[key], true);
+        if (invalid.error) {
+          inputs_invalid.identifier = invalid.error;
+          message += `- Identifier: ${invalid.message}\n`;
         }
         break;
     }
